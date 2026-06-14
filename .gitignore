@@ -1,0 +1,15 @@
+# Secrets — never commit. (Hermes per-profile .env + auth tokens.)
+.env
+**/.env
+auth.json
+**/auth.json
+*.pem
+*.key
+
+# macOS / fuse-t AppleDouble metadata
+._*
+.DS_Store
+
+# Python caches
+__pycache__/
+*.pyc
