@@ -28,6 +28,19 @@
 - `db/corpus/index.jsonl` — 현행 발행본 39편 카탈로그(`date·title·type·path`, 전부 C 맥락해설형).
   같은 주제 과거편 1~2개를 찾아 **일관성·중복 확인**에 참조.
 
+## 제작 오케스트레이션 (E2E 파이프)
+
+1편 제작은 **결정론 스크립트**로 실행한다(LLM 자율 4-step 금지 — 종료보장 밖). 절차:
+
+1. **사전**: trend-researcher 협의(chat)로 주제/앵글 선택.
+2. **실행**: `terminal`로 한 줄 — 생성→검수→seo→번들이 결정론으로 돌고 스크립트가 종료(구조적 종료보장).
+
+       python3 /opt/data/siasa/orchestrator/produce_episode.py --topic "<앵글 포함 주제>"
+
+3. **사후**: 산출 번들의 **검수 리포트(.review)로 go/no-go**(아래 절차). 스크립트는 판정 안 함(`verdict=REVIEW`).
+
+상세: `siasa/orchestrator/SKILL.md`.
+
 ## go/no-go 절차
 
 1. 지침/게이트 기준을 모두 통과하는가 (위 권위 출처).
