@@ -28,16 +28,28 @@
 - `db/corpus/index.jsonl` — 현행 발행본 39편 카탈로그(`date·title·type·path`, 전부 C 맥락해설형).
   같은 주제 과거편 1~2개를 찾아 **일관성·중복 확인**에 참조.
 
-## 제작 오케스트레이션 (E2E 파이프)
+## 제작 오케스트레이션 (비동기 큐 — 슬랙/온디맨드)
 
-1편 제작은 **결정론 스크립트**로 실행한다(LLM 자율 4-step 금지 — 종료보장 밖). 절차:
+1편 제작은 **결정론 파이프**가 수행한다(LLM 자율 4-step 금지 — 종료보장 밖). 디렉터는
+**직접 쓰지도, `produce_episode`를 foreground로 돌리지도 않는다**: 생성은 수 분~수십 분이라
+`terminal` 블로킹이 슬랙/디렉터 턴을 먼저 타임아웃시킨다. 대신 주제를 **제작 큐에 등록**하고
+즉시 응답한다. 등록된 주제는 cron 결정론 파이프(`cron_produce` → `produce_episode`:
+생성→검수→seo→번들, 서버측 **분량 스캐폴딩 + 게이트**)가 백그라운드로 처리한다.
+
+절차:
 
 1. **사전**: trend-researcher 협의(chat)로 주제/앵글 선택.
-2. **실행**: `terminal`로 한 줄 — 생성→검수→seo→번들이 결정론으로 돌고 스크립트가 종료(구조적 종료보장).
+2. **등록(즉답)**: `terminal`로 한 줄 — 큐에 등록하고 **즉시 종료**(블로킹 없음).
 
-       python3 /opt/data/siasa/orchestrator/produce_episode.py --topic "<앵글 포함 주제>"
+       python3 /opt/data/db/topics/topic_queue.py add --topic "<주제>" --angle "<앵글>" --type C
 
-3. **사후**: 산출 번들의 **검수 리포트(.review)로 go/no-go**(아래 절차). 스크립트는 판정 안 함(`verdict=REVIEW`).
+   등록 결과(`id`)를 사용자에게 알리고, 산출물은 완료 시 `workspace/episodes/<주제슬러그>/`에
+   저장됨을 안내한다(**같은 턴에 대본 본문은 오지 않는다** — 백그라운드 처리).
+3. **사후**: 큐 처리 완료 후 산출 번들의 **검수 리포트(.review)로 go/no-go**(아래 절차).
+   파이프는 판정 안 함(`verdict=REVIEW`).
+
+> 디렉터는 `produce_episode`·`hermes cron run`을 **직접(foreground) 실행하지 않는다**(블로킹).
+> 큐는 영속 → 등록만 되면 유실 없음. 즉시 처리·스케줄 조정은 **운영자/cron** 몫.
 
 상세: `siasa/orchestrator/SKILL.md`.
 
