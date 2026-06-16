@@ -1,5 +1,5 @@
 """siasa_writer 단위 테스트 — 프롬프트 구성·선택 로직(모델 비의존)."""
-from siasa_writer import build_user_prompt, pick_best, OUTLINE, CLOSE
+from siasa_writer import build_user_prompt, pick_best, OUTLINE, CLOSE, SYSTEM, SLEN_GUIDE
 import script_guard as g
 
 BODY = open(__file__.replace("test_siasa_writer.py", "fixture_good.txt"), encoding="utf-8").read()
@@ -12,6 +12,17 @@ def test_prompt_contains_all_sections():
         assert f"{i})" in p
     assert "주제: 환율 급등" in p
     assert "사천오백자 이상" in p
+
+
+def test_sentence_length_guide_in_system():
+    # 스파이크 GO(avg_slen 43.8→35.5)로 검증된 문장길이 레버가 SYSTEM에 반영
+    assert SLEN_GUIDE in SYSTEM
+    assert "짧고 단정" in SLEN_GUIDE
+
+
+def test_sentence_length_guide_in_user_prompt():
+    # 검증된 treatment는 system+user 양쪽에 지침 주입 → user 프롬프트에도 반영
+    assert SLEN_GUIDE in build_user_prompt("환율 급등")
 
 
 def test_pick_best_prefers_publishable_longest():
