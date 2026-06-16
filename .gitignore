@@ -15,3 +15,59 @@ __pycache__/
 *.pyc
 .coverage
 .pytest_cache/
+
+# ─────────────────────────────────────────────────────────────
+# Hermes 런타임 상태 — 살아있는 게이트웨이가 직접 쓰는 파일.
+# 절대 삭제 금지(라이브 시스템), git 추적만 제외한다.
+# ─────────────────────────────────────────────────────────────
+# DB / 잠금 / PID / 게이트웨이 상태 (root + per-profile)
+*.db
+*.db-shm
+*.db-wal
+*.lock
+*.pid
+gateway_state.json
+**/gateway_state.json
+
+# 런타임 디렉터리 (root + per-profile)
+logs/
+sessions/
+cron/
+cache/
+kanban/
+
+# 점(.) 상태 파일 / 캐시
+.hermes_history
+.install_method
+.scratch_tip_shown
+.update_check
+**/.update_check
+.skills_prompt_snapshot.json
+**/.skills_prompt_snapshot.json
+channel_directory.json
+**/channel_directory.json
+context_length_cache.yaml
+*_cache.json
+
+# 벤더링된 Hermes 설치물 / 번들 스킬 (재생성됨)
+/.npm/
+/.local/
+/bin/
+/skills/
+profiles/*/skills/
+profiles/*/bin/
+
+# 설정 백업 (config.yaml.bak-*)
+*.bak
+*.bak-*
+*.bak.*
+
+# 런타임 에피소드 산출물
+workspace/
+
+# ─────────────────────────────────────────────────────────────
+# 대용량 생성 산출물 (학습 결과 — git 부적합, 삭제 금지)
+# ─────────────────────────────────────────────────────────────
+siasa/adapters/
+qlora_out/
+unsloth_compiled_cache/
