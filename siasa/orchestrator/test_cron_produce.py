@@ -50,14 +50,39 @@ def test_silent_when_empty_queue(tmp_path):
     assert not prod.calls
 
 
-def test_failure_marks_error_and_raises(tmp_path):
+def test_transient_failure_requeues_then_errors_at_cap(tmp_path):
+    # 일시 실패는 pending 재큐(다음 tick 재시도). 상한(MAX_ATTEMPTS) 초과만 error.
+    # → 일시 OOM이 주제를 영구 유실시키지 않는다.
+    from cron_produce import MAX_ATTEMPTS
     q, lock, ws = _paths(tmp_path)
     add_topic("주제", date="2026-06-16", path=q)
     def boom(topic, workspace):
         raise RuntimeError("생성 실패")
-    with pytest.raises(RuntimeError):
+    for i in range(1, MAX_ATTEMPTS):           # cap 직전까지: 재큐
+        with pytest.raises(RuntimeError):
+            run_once(q, lock, ws, produce_runner=boom)
+        rec = load_topics(q)[0]
+        assert rec["status"] == "pending" and rec["attempts"] == i
+    with pytest.raises(RuntimeError):           # cap 도달: error
         run_once(q, lock, ws, produce_runner=boom)
-    assert load_topics(q)[0]["status"] == "error"
+    rec = load_topics(q)[0]
+    assert rec["status"] == "error" and rec["attempts"] == MAX_ATTEMPTS
+
+
+def test_transient_failure_then_success_marks_done(tmp_path):
+    q, lock, ws = _paths(tmp_path)
+    add_topic("주제", date="2026-06-16", path=q)
+    state = {"n": 0}
+    def flaky(topic, workspace):
+        state["n"] += 1
+        if state["n"] == 1:
+            raise RuntimeError("일시 실패")
+        return {"bundle_path": "/ws/bundle.json"}
+    with pytest.raises(RuntimeError):
+        run_once(q, lock, ws, produce_runner=flaky)   # 1차 실패 → pending
+    assert load_topics(q)[0]["status"] == "pending"
+    run_once(q, lock, ws, produce_runner=flaky)       # 2차 성공 → done
+    assert load_topics(q)[0]["status"] == "done"
 
 
 def test_lock_released_after_run(tmp_path):

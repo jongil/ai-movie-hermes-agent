@@ -16,7 +16,12 @@ from typing import Callable
 _HERE = Path(__file__).resolve()
 HERMES_HOME = os.environ.get("HERMES_DIR", "/opt/data")
 sys.path.insert(0, str(_HERE.parents[2] / "db" / "topics"))
-from topic_queue import pop_next, mark  # noqa: E402
+from topic_queue import pop_next, mark, bump_attempts  # noqa: E402
+
+# 일시 실패(로드 OOM·BACKEND_UNAVAILABLE 등) 재시도 상한. 초과 시에만 error.
+# 문자열로 일시/영구를 분류하지 않는다 — 콘텐츠 실패는 드물어 헛재시도가 저렴하고,
+# 오분류로 인한 주제 영구 유실(stranding)을 피한다.
+MAX_ATTEMPTS = 3
 
 QUEUE_PATH = f"{HERMES_HOME}/db/topics/queue.jsonl"
 LOCK_PATH = f"{HERMES_HOME}/workspace/.produce.lock"
@@ -68,7 +73,9 @@ def run_once(
         try:
             rep = produce_runner(topic["topic"], ws)
         except Exception:
-            mark(topic["id"], "error", queue_path)    # 실패=error(재처리 방지)
+            attempts = bump_attempts(topic["id"], queue_path)
+            # 상한 전이면 pending 재큐(다음 tick 재시도), 초과면 error. 실패는 그대로 전파(stderr 가시성).
+            mark(topic["id"], "error" if attempts >= MAX_ATTEMPTS else "pending", queue_path)
             raise
         mark(topic["id"], "done", queue_path)
         return f"제작 완료: id={topic['id']} · {topic['topic']} → {rep.get('bundle_path')}"

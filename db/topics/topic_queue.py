@@ -84,6 +84,17 @@ def mark(id: int, status: str, path: str | Path = DB_PATH) -> None:
     raise KeyError(f"id={id} 없음")
 
 
+def bump_attempts(id: int, path: str | Path = DB_PATH) -> int:
+    """id의 ``attempts`` 카운터를 +1 하고 영속·반환. cron 재시도 상한 판정용."""
+    records = load_topics(path)
+    for rec in records:
+        if rec["id"] == id:
+            rec["attempts"] = int(rec.get("attempts", 0)) + 1
+            _write_all(records, path)
+            return rec["attempts"]
+    raise KeyError(f"id={id} 없음")
+
+
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     ap = argparse.ArgumentParser(description="주제 큐 관리")
     sub = ap.add_subparsers(dest="cmd", required=True)
