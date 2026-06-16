@@ -28,15 +28,18 @@ def test_clean_title_normalizes_nfd_filename():
     assert clean_title(nfd) == "일본 저출산 정책 전환"
 
 
-def test_type_for_date_may_onward_is_c():
-    assert type_for_date("2026-05-01") == "C"   # 사용자 확정: 5월+ 전부 C
+def test_type_for_date_current_convention_is_c():
+    # 현행 컨벤션(2026-04-13+) 전부 C. 5월+ 사용자 확정, 04월 16편 구조대조로 확정(2026-06-16).
+    assert type_for_date("2026-04-13") == "C"
+    assert type_for_date("2026-04-30") == "C"
+    assert type_for_date("2026-05-01") == "C"
     assert type_for_date("2026-06-09") == "C"
 
 
-def test_type_for_date_april_is_unconfirmed():
-    # 04월 현행 컨벤션 시작분은 미확인(B형 의심 제목 존재) — 거짓 라벨 금지
-    assert type_for_date("2026-04-13") == "unconfirmed"
-    assert type_for_date("2026-04-30") == "unconfirmed"
+def test_type_for_date_pre_convention_unconfirmed():
+    # 컨벤션 이전(2026-04-13 미만)은 unconfirmed(인덱스엔 미포함, 함수 계약 유지)
+    assert type_for_date("2026-04-03") == "unconfirmed"
+    assert type_for_date("2026-01-02") == "unconfirmed"
 
 
 def test_make_record_shape():

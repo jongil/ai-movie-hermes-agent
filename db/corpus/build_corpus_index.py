@@ -23,7 +23,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "siasa" / "writer")
 from script_guard import is_publishable  # noqa: E402
 
 DEFAULT_GLOB = "/Users/gdash/docs/경제베테랑-youtube/2026-*/대본.txt"
-TYPE_CUTOFF = "2026-05-01"                       # 이 날짜부터 사용자 확정 C
+# 현행 컨벤션 시작(2026-04-13) 이후 전부 C(맥락 해설형). 5월+ 사용자 확정, 04월 16편은
+# 도입/본문 구조 대조로 확정(2026-06-16). 이전(컨벤션 미만)은 unconfirmed.
+TYPE_CUTOFF = "2026-04-13"
 _NOISE_SUFFIXES = {"분석", "가이드라인", "지침"}
 _SENT_END = re.compile(r"[.!?。]")
 
