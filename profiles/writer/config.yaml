@@ -1,0 +1,8 @@
+model:
+  provider: "custom"
+  base_url: "http://ai-source-builder-ollama-1:11434/v1"
+  # default 프로필과 동일: 기본 gemma4:12b는 ollama가 num_ctx 4096으로 로드해
+  # 프롬프트가 잘림 → num_ctx 65536 구운 변종 사용(plans/20260614-2031 참조).
+  default: "gemma4:12b-64k"
+  context_length: 65536
+  ollama_num_ctx: 65536
