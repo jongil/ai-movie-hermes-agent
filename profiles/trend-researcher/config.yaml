@@ -1,0 +1,11 @@
+model:
+  provider: custom
+  base_url: http://ai-source-builder-ollama-1:11434/v1
+  default: gemma4:12b-64k
+  context_length: 65536
+  ollama_num_ctx: 65536
+max_tokens: 8192
+onboarding:
+  seen:
+    tool_progress_prompt: true
+    busy_input_prompt: true
