@@ -9,3 +9,12 @@ onboarding:
   seen:
     tool_progress_prompt: true
     busy_input_prompt: true
+
+# 슬랙 대본 생성요청을 결정론적으로 제작 큐에 등록(LLM 판단 밖 side-effect).
+# 프롬프트-only 라우팅이 튜닝 안 된 디렉터에서 실패해(plans/20260616-2224 live-NEGATIVE)
+# 훅으로 대체. headless(게이트웨이) 환경이라 auto_accept로 TTY consent 우회(P0 실측 확인).
+hooks_auto_accept: true
+hooks:
+  pre_llm_call:
+    - command: python3 /opt/data/siasa/orchestrator/slack_script_enqueue_hook.py
+      timeout: 30

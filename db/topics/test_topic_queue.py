@@ -3,7 +3,24 @@ import unicodedata
 
 import pytest
 
-from topic_queue import add_topic, load_topics, pop_next, mark, VALID_STATUS, _parse_args
+from topic_queue import (
+    add_topic, load_topics, pop_next, mark, bump_attempts, VALID_STATUS, _parse_args,
+)
+
+
+def test_bump_attempts_increments_and_persists(tmp_path):
+    p = str(tmp_path / "q.jsonl")
+    add_topic("주제", date="2026-06-16", path=p)
+    assert bump_attempts(1, p) == 1
+    assert bump_attempts(1, p) == 2
+    assert load_topics(p)[0]["attempts"] == 2
+
+
+def test_bump_attempts_unknown_id_raises(tmp_path):
+    p = str(tmp_path / "q.jsonl")
+    add_topic("주제", date="2026-06-16", path=p)
+    with pytest.raises(KeyError):
+        bump_attempts(99, p)
 
 
 def test_add_assigns_id_and_pending(tmp_path):
